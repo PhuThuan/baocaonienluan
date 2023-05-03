@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -24,7 +25,7 @@ class ProductController extends Controller
         else{
             $cart[$id]=[
                 'name'=>$product->products_name,
-                'price'=>$product->products_price,
+                'price'=>($product->products_price*(100-$product->products_discount))/100,
                 'quantity'=>1,
                 'image'=>$product->products_image,
             ];
@@ -38,6 +39,10 @@ class ProductController extends Controller
         ], status:200);
     }
     public function showCart(){
+        $data=null;
+        if( session()->has('loginId')){
+            $data = User::Where('id','=', session()->get('loginId'))->first();
+        } 
         $cart[]=[
             'name'=>null,
             'price'=>null,
@@ -46,7 +51,7 @@ class ProductController extends Controller
         ];
         $carts=session()->get('cart');
 
-       return view('products.cart',compact(var_name:'carts'));
+       return view('products.cart',compact('carts','data'));
     }
     public function updateCart(Request $request){
        if($request->id && $request->quantity) {
@@ -67,5 +72,9 @@ class ProductController extends Controller
             $cartComponent=view('products.components.cart_components',compact(var_name:'carts'))->render();
             return response()->json(['cart_component'=>$cartComponent,'code'=>200],status:200);
            }
+    }
+    public function productDetail($id){
+        $products=DB::table('products')->find($id);
+        return view('client.products_detail',compact('products'));
     }
 }
